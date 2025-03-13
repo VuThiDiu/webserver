@@ -1,3 +1,8 @@
+import constants.MethodConstants;
+import constants.ResCode;
+import utils.LoggingSystem;
+import utils.Template;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -16,12 +21,14 @@ public class SimpleWebServer {
         /* ServerSocket listening, accepting and management session */
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
-                /* socket */
+                /* socket : accept() waiting util client accept the connection*/
                 Socket clientSocket = serverSocket.accept();
                 /* Assign each thread for each request */
                 new Thread(() -> {
                     handleRequest(clientSocket);
                 }).start();
+
+
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -56,21 +63,32 @@ public class SimpleWebServer {
                 bodyBuilder.append((char) in.read());
             }
             String content = bodyBuilder.toString();
-            System.out.println("Body : " + content);
 
-            /* Handle content and response to server */
+            LoggingSystem.buildLogs("Method: ", method, "Path: ", path, "Headers: ", headers.toString(), "Content: ", content);
 
-
-
+            /* Response */
+            String response = responseExample(method, path);
+            outputStream.write(response.getBytes());
+            clientSocket.close();
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
-            try {
-                clientSocket.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
         }
+    }
+
+
+    private static String responseExample(String method, String path) {
+        ResCode resCode = ResCode.BAD_REQUEST;
+        String content = "";
+        if (MethodConstants.GET.equals(method)) {
+            if ("/".equals(path)) {
+                resCode = ResCode.OK;
+                content = "Hello world!";
+            } else {
+                resCode = ResCode.NOT_FOUND;
+                content = "404 Not found!";
+            }
+        }
+
+        return Template.buildResponse(resCode, content);
     }
 }
