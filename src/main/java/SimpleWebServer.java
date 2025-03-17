@@ -1,34 +1,33 @@
+import config.ApplicationConfig;
 import constants.MethodConstants;
 import constants.ResCode;
-import utils.LoggingSystem;
+import http.HttpRequest;
+import service.RequestProcessor;
 import utils.Template;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SimpleWebServer {
 
 
     public static void main(String[] args) {
-        int port = 9000;
+        ApplicationConfig applicationConfig = ApplicationConfig.getInstance();
+        ExecutorService executorService = Executors.newFixedThreadPool(applicationConfig.getThreads());
 
         /* ServerSocket listening, accepting and management session */
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket serverSocket = new ServerSocket(applicationConfig.getPort())) {
             while (true) {
                 /* socket : accept() waiting util client accept the connection*/
                 Socket clientSocket = serverSocket.accept();
                 /* Assign each thread for each request */
-                new Thread(() -> {
-                    handleRequest(clientSocket);
-                }).start();
-
-
+                executorService.execute(() -> handleRequest(clientSocket));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -37,41 +36,24 @@ public class SimpleWebServer {
 
 
     private static void handleRequest(Socket clientSocket) {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             OutputStream outputStream = clientSocket.getOutputStream();
-        ) {
-            /* Get method */
-            String readLine = in.readLine();
-            if (readLine == null) return;
-            String[] requestParts = readLine.split(" ");
-            if (requestParts.length < 2) throw new SocketException("Cannot get method and path");
-            String method = requestParts[0];
-            String path = requestParts[1];
+        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+             OutputStream outputStream = clientSocket.getOutputStream()) {
+            /*Build http request*/
+            RequestProcessor requestProcessor = RequestProcessor.getInstance();
+            HttpRequest httpRequest = requestProcessor.fromClientRequest(inputStream);
 
-
-            /* Get headers */
-            Map<String, String> headers = new HashMap<>();
-            String headerString;
-            while ((headerString = in.readLine()) != null && !headerString.isEmpty()) {
-                String[] splitHeaders = headerString.split(":");
-                headers.put(splitHeaders[0].trim(), splitHeaders[1].trim());
-            }
-
-            /* Get content */
-            StringBuilder bodyBuilder = new StringBuilder();
-            while (in.ready()) {
-                bodyBuilder.append((char) in.read());
-            }
-            String content = bodyBuilder.toString();
-
-            LoggingSystem.buildLogs("Method: ", method, "Path: ", path, "Headers: ", headers.toString(), "Content: ", content);
-
-            /* Response */
-            String response = responseExample(method, path);
+            /*Build http response for Get request*/
+            String response = responseExample(httpRequest.getMethod(), httpRequest.getPath());
             outputStream.write(response.getBytes());
-            clientSocket.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            outputStream.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
