@@ -1,7 +1,7 @@
 import config.ApplicationConfig;
-import constants.MethodConstants;
+import constants.HttpMethod;
 import constants.ResCode;
-import http.HttpRequest;
+import dto.HttpRequest;
 import service.RequestProcessor;
 import utils.Template;
 
@@ -14,9 +14,15 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
+//TODO: split code and refactor code into another class
+
 public class SimpleWebServer {
+    public SimpleWebServer() {
+    }
 
 
+    //TODO: split code
     public static void main(String[] args) {
         ApplicationConfig applicationConfig = ApplicationConfig.getInstance();
         ExecutorService executorService = Executors.newFixedThreadPool(applicationConfig.getThreads());
@@ -30,19 +36,22 @@ public class SimpleWebServer {
                 executorService.execute(() -> handleRequest(clientSocket));
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+//            ex.printStackTrace(); // TODO: reformat into logger
         }
     }
 
 
     private static void handleRequest(Socket clientSocket) {
-        try (BufferedReader inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        try (InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream());
+             BufferedReader inputStream = new BufferedReader(inputStreamReader);
              OutputStream outputStream = clientSocket.getOutputStream()) {
             /*Build http request*/
             RequestProcessor requestProcessor = RequestProcessor.getInstance();
-            HttpRequest httpRequest = requestProcessor.fromClientRequest(inputStream);
+            HttpRequest httpRequest = requestProcessor.formatClientRequest(inputStream);
 
             /*Build http response for Get request*/
+
+            // TODO: handle response by method and path by structure of each method ( refer dispatcher )
             String response = responseExample(httpRequest.getMethod(), httpRequest.getPath());
             outputStream.write(response.getBytes());
             outputStream.flush();
@@ -61,7 +70,7 @@ public class SimpleWebServer {
     private static String responseExample(String method, String path) {
         ResCode resCode = ResCode.BAD_REQUEST;
         String content = "";
-        if (MethodConstants.GET.equals(method)) {
+        if (HttpMethod.GET.equals(method)) {
             if ("/".equals(path)) {
                 resCode = ResCode.OK;
                 content = "Hello world!";

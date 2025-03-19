@@ -1,7 +1,5 @@
 package config;
 
-import service.ConfigLoader;
-
 
 public class ApplicationConfig {
     private int port;
@@ -22,11 +20,15 @@ public class ApplicationConfig {
     }
 
     /* Create singleton applicationConfig*/
-    private static ApplicationConfig applicationConfig;
-    public static synchronized ApplicationConfig getInstance(){
+    private static volatile ApplicationConfig applicationConfig;
+    public static ApplicationConfig getInstance(){
         if(applicationConfig == null){
-            ConfigLoader configLoader = ConfigLoader.getInstance();
-            applicationConfig = configLoader.loadConfig("config/application.yml");
+            synchronized (ApplicationConfig.class){
+                if(applicationConfig == null){
+                    ConfigLoader configLoader = new ConfigLoader();
+                    applicationConfig = configLoader.loadConfig("config/application.yml");
+                }
+            }
         }
         return applicationConfig;
     }

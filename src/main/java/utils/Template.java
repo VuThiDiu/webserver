@@ -4,6 +4,7 @@ import constants.ResCode;
 
 public class Template {
     public static final String HTTP_1_1 = "HTTP/1.1";
+
     public static String responseTemplate = "%s %s %s\n" +
             "Content-Type: text/html\n" +
             "Content-Length: %d\n" +
