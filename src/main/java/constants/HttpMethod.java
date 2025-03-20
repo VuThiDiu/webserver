@@ -1,8 +1,18 @@
 package constants;
 
-public class HttpMethod {
-    public static final String GET = "GET";
-    public static final String POST = "POST";
-    public static final String PUT = "PUT";
-    public static final String DELETE = "DELETE";
+
+import lombok.Getter;
+
+@Getter
+public enum HttpMethod {
+    GET("GET"),
+    POST("POST"),
+    PUT("PUT"),
+    DELETE("DELETE");
+
+    HttpMethod(String method) {
+        this.method = method;
+    }
+
+    private final String method;
 }

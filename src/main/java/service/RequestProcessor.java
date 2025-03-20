@@ -48,6 +48,7 @@ public class RequestProcessor {
         request.setPath(path);
     }
 
+
     public void processGetHeaders(HttpRequest request, BufferedReader in) throws IOException {
         Map<String, String> headers = new HashMap<>();
         String headerString;
@@ -59,7 +60,8 @@ public class RequestProcessor {
     }
 
     public void processGetContent(HttpRequest request, BufferedReader in) throws IOException {
-        // TODO: have a answer for "why u dont use the line instead of the char"
+        /*if content in line is very large -> out of memory*/
+        /*can use readLine() to read all line content of request */
         StringBuilder bodyBuilder = new StringBuilder();
         while (in.ready()) {
             bodyBuilder.append((char) in.read());
