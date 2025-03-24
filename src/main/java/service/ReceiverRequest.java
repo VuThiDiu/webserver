@@ -3,13 +3,16 @@ package service;
 import config.ApplicationConfig;
 import constants.HttpMethod;
 import constants.ResCode;
+import controller.HomeController;
 import dto.HttpRequest;
+import exception.MethodNotDeclared;
 import utils.Template;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -19,10 +22,16 @@ import java.util.concurrent.Executors;
 public class ReceiverRequest {
     private ExecutorService executorService;
     private ApplicationConfig applicationConfig;
+    private Dispatcher dispatcher;
 
     public ReceiverRequest() {
         applicationConfig = ApplicationConfig.getInstance();
         executorService = Executors.newFixedThreadPool(applicationConfig.getThreads());
+        dispatcher = Dispatcher.getInstance();
+        dispatcher.setController(new HomeController());
+
+        /* Load thu cong cac controller */
+
     }
 
 
@@ -49,36 +58,30 @@ public class ReceiverRequest {
 
             /*Build http response for Get request*/
 
-            // TODO: handle response by method and path by structure of each method ( refer dispatcher )
-            String response = responseExample(httpRequest.getMethod(), httpRequest.getPath());
-            outputStream.write(response.getBytes());
+            String responseBody = dispatcher.execute(httpRequest.getMethod(), httpRequest.getPath(), httpRequest.getContent());
+            // TODO: Reformat response base on standard of HTTP and contentTypeResponse
+            outputStream.write(formatResponse(responseBody).getBytes());
             outputStream.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
+        }catch (MethodNotDeclared e){
+            // TODO: response 404
+        } catch (Exception ex) {
+            // TODO: Response 500
+        }finally {
             try {
                 clientSocket.close();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+               // TODO : response 404
             }
         }
     }
 
-    private static String responseExample(String method, String path) {
+
+    private static String formatResponse( String responseBody) {
         ResCode resCode = ResCode.BAD_REQUEST;
         String content = "";
-        if (HttpMethod.GET.equals(method)) {
-            if ("/".equals(path)) {
-                resCode = ResCode.OK;
-                content = "Hello world!";
-            } else {
-                resCode = ResCode.NOT_FOUND;
-                content = "404 Not found!";
-            }
-        }
-
+        resCode = ResCode.OK;
+        content = responseBody;
         return Template.buildResponse(resCode, content);
     }
-
 
 }
