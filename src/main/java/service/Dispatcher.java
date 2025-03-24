@@ -16,45 +16,46 @@ import java.util.Objects;
 /*Guarantee this is a singleton class  */
 public class Dispatcher {
     /* Handler mapping controller */
-    private Map<String, Method> getController;
-    private Map<String, Method> postController;
-    private Map<String, Method> putController;
-    private Map<String, Method> deleteController;
-
-    private Object controller;
+    private Map<String, Method> getMethod;
+    private Map<String, Method> postMethod;
+    private Map<String, Method> putMethod;
+    private Map<String, Method> deleteMethod;
+    private Map<String, Object> mapsController;
 
 
     private static Dispatcher instance;
 
     public void setController(Object controller) {
-        this.controller = controller;
-        scanHandlers();
+        scanHandlers(controller);
+        mapsController.put(controller.getClass().getName(), controller);
     }
 
     private Dispatcher() {
-        getController = new HashMap<>();
-        postController = new HashMap<>();
-        putController = new HashMap<>();
-        deleteController = new HashMap<>();
+        getMethod = new HashMap<>();
+        postMethod = new HashMap<>();
+        putMethod = new HashMap<>();
+        deleteMethod = new HashMap<>();
+
+        mapsController = new HashMap<>();
     }
 
-    private void scanHandlers() {
+    private void scanHandlers(Object controller) {
         for (Method method : controller.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(GetMapping.class)) {
                 GetMapping getMapping = method.getAnnotation(GetMapping.class);
-                getController.put(getMapping.value(), method);
+                getMethod.put(getMapping.value(), method);
             }
             if (method.isAnnotationPresent(PostMapping.class)) {
                 PostMapping postMapping = method.getAnnotation(PostMapping.class);
-                postController.put(postMapping.value(), method);
+                postMethod.put(postMapping.value(), method);
             }
             if (method.isAnnotationPresent(PutMapping.class)) {
                 PutMapping putMapping = method.getAnnotation(PutMapping.class);
-                putController.put(putMapping.value(), method);
+                putMethod.put(putMapping.value(), method);
             }
             if (method.isAnnotationPresent(DeleteMapping.class)) {
                 DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
-                deleteController.put(deleteMapping.value(), method);
+                deleteMethod.put(deleteMapping.value(), method);
             }
         }
     }
@@ -62,23 +63,28 @@ public class Dispatcher {
     public String execute(String method, String path, String requestBody) {
         try {
             if (method.equals(HttpMethod.GET.getMethod())) {
-                Method handler = getController.get(path);
+                Method handler = getMethod.get(path);
                 if (Objects.isNull(handler)) return null;
+                String className = handler.getDeclaringClass().getName();
+                Object controller = mapsController.get(className);
                 return (String) handler.invoke(controller);
             } else if (method.equals(HttpMethod.POST.getMethod())) {
-                Method handler = postController.get(path);
+                Method handler = postMethod.get(path);
                 if (Objects.isNull(handler)) return null;
-
+                String className = handler.getDeclaringClass().getName();
+                Object controller = mapsController.get(className);
                 return (String) handler.invoke(controller, requestBody);
             } else if (method.equals(HttpMethod.PUT.getMethod())) {
-                Method handler = putController.get(path);
+                Method handler = putMethod.get(path);
                 if (Objects.isNull(handler)) return null;
-
+                String className = handler.getDeclaringClass().getName();
+                Object controller = mapsController.get(className);
                 return (String) handler.invoke(controller, requestBody);
             } else if (method.equals(HttpMethod.DELETE.getMethod())) {
-                Method handler = deleteController.get(path);
+                Method handler = deleteMethod.get(path);
                 if (Objects.isNull(handler)) return null;
-
+                String className = handler.getDeclaringClass().getName();
+                Object controller = mapsController.get(className);
                 return (String) handler.invoke(controller, requestBody);
             } else throw new MethodNotDeclared("Method not declared");
 
