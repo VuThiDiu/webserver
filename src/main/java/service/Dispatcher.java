@@ -1,10 +1,9 @@
 package service;
 
-import annotation.DeleteMapping;
-import annotation.GetMapping;
-import annotation.PostMapping;
-import annotation.PutMapping;
-import constants.HttpMethod;
+import annotation.http.DeleteMapping;
+import annotation.http.GetMapping;
+import annotation.http.PostMapping;
+import annotation.http.PutMapping;
 import exception.MethodNotDeclared;
 
 import java.lang.reflect.InvocationTargetException;
@@ -24,6 +23,16 @@ public class Dispatcher {
 
 
     private static Dispatcher instance;
+    public static Dispatcher getInstance() {
+        if (instance == null) {
+            synchronized (Dispatcher.class) {
+                if (instance == null) {
+                    instance = new Dispatcher();
+                }
+            }
+        }
+        return instance;
+    }
 
     public void setController(Object controller) {
         scanHandlers(controller);
@@ -31,12 +40,15 @@ public class Dispatcher {
     }
 
     private Dispatcher() {
+        /* Init loading hashMap*/
         getMethod = new HashMap<>();
         postMethod = new HashMap<>();
         putMethod = new HashMap<>();
         deleteMethod = new HashMap<>();
 
         mapsController = new HashMap<>();
+
+        /* Load all controller*/
     }
 
     private void scanHandlers(Object controller) {
@@ -60,48 +72,41 @@ public class Dispatcher {
         }
     }
 
-    public String execute(String method, String path, String requestBody) {
-        try {
-            if (method.equals(HttpMethod.GET.getMethod())) {
-                Method handler = getMethod.get(path);
-                if (Objects.isNull(handler)) return null;
-                String className = handler.getDeclaringClass().getName();
-                Object controller = mapsController.get(className);
-                return (String) handler.invoke(controller);
-            } else if (method.equals(HttpMethod.POST.getMethod())) {
-                Method handler = postMethod.get(path);
-                if (Objects.isNull(handler)) return null;
-                String className = handler.getDeclaringClass().getName();
-                Object controller = mapsController.get(className);
-                return (String) handler.invoke(controller, requestBody);
-            } else if (method.equals(HttpMethod.PUT.getMethod())) {
-                Method handler = putMethod.get(path);
-                if (Objects.isNull(handler)) return null;
-                String className = handler.getDeclaringClass().getName();
-                Object controller = mapsController.get(className);
-                return (String) handler.invoke(controller, requestBody);
-            } else if (method.equals(HttpMethod.DELETE.getMethod())) {
-                Method handler = deleteMethod.get(path);
-                if (Objects.isNull(handler)) return null;
-                String className = handler.getDeclaringClass().getName();
-                Object controller = mapsController.get(className);
-                return (String) handler.invoke(controller, requestBody);
-            } else throw new MethodNotDeclared("Method not declared");
 
+
+    public Object execute(String method, String path, String requestBody) {
+        try {
+            switch (method) {
+                case "GET":
+                    Method handler = getMethod.get(path);
+                    if (Objects.isNull(handler)) return null;
+                    String className = handler.getDeclaringClass().getName();
+                    Object controller = mapsController.get(className);
+                    return  handler.invoke(controller);
+                case "POST":
+                    handler = postMethod.get(path);
+                    if (Objects.isNull(handler)) return null;
+                    className = handler.getDeclaringClass().getName();
+                    controller = mapsController.get(className);
+                    return handler.invoke(controller, requestBody);
+                case "PUT":
+                    handler = putMethod.get(path);
+                    if (Objects.isNull(handler)) return null;
+                    className = handler.getDeclaringClass().getName();
+                    controller = mapsController.get(className);
+                    return  handler.invoke(controller, requestBody);
+                case "DELETE":
+                    handler = deleteMethod.get(path);
+                    if (Objects.isNull(handler)) return null;
+                    className = handler.getDeclaringClass().getName();
+                    controller = mapsController.get(className);
+                    return  handler.invoke(controller, requestBody);
+                default:
+                    throw new MethodNotDeclared("Method not declared");
+            }
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static Dispatcher getInstance() {
-        if (instance == null) {
-            synchronized (Dispatcher.class) {
-                if (instance == null) {
-                    instance = new Dispatcher();
-                }
-            }
-        }
-        return instance;
     }
 
 

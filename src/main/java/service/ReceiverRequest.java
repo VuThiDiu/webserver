@@ -1,7 +1,6 @@
 package service;
 
 import config.ApplicationConfig;
-import constants.HttpMethod;
 import constants.ResCode;
 import controller.HomeController;
 import dto.HttpRequest;
@@ -12,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -28,10 +26,9 @@ public class ReceiverRequest {
         applicationConfig = ApplicationConfig.getInstance();
         executorService = Executors.newFixedThreadPool(applicationConfig.getThreads());
         dispatcher = Dispatcher.getInstance();
+
+        // TODO: automatically scan all controllers in the package
         dispatcher.setController(new HomeController());
-
-        /* Load thu cong cac controller */
-
     }
 
 
@@ -58,30 +55,34 @@ public class ReceiverRequest {
 
             /*Build http response for Get request*/
 
-            String responseBody = dispatcher.execute(httpRequest.getMethod(), httpRequest.getPath(), httpRequest.getContent());
-            // TODO: Reformat response base on standard of HTTP and contentTypeResponse
-            outputStream.write(formatResponse(responseBody).getBytes());
+            Object responseData = dispatcher.execute(httpRequest.getMethod(), httpRequest.getPath(), httpRequest.getContent());
+
+            /*Format response by contentType*/
+            String accept = httpRequest.getHeaders().get("Accept");
+            String contentType = httpRequest.getHeaders().get("Content-Type");
+            if (accept != null && !"*/*".equals(accept)) contentType = accept;
+
+            outputStream.write(formatResponse(ResCode.OK, responseData, contentType).getBytes());
             outputStream.flush();
-        }catch (MethodNotDeclared e){
-            // TODO: response 404
+        } catch (MethodNotDeclared e) {
+            // TODO: Response 404
+            e.printStackTrace();
         } catch (Exception ex) {
             // TODO: Response 500
-        }finally {
+            ex.printStackTrace();
+        } finally {
             try {
                 clientSocket.close();
             } catch (IOException e) {
-               // TODO : response 404
+                // TODO : response 404
+                e.printStackTrace();
             }
         }
     }
 
-
-    private static String formatResponse( String responseBody) {
-        ResCode resCode = ResCode.BAD_REQUEST;
-        String content = "";
-        resCode = ResCode.OK;
-        content = responseBody;
-        return Template.buildResponse(resCode, content);
+    private static String formatResponse(ResCode rescode, Object responseBody, String contentType) {
+        contentType = contentType == null ? "text/plain" : contentType;
+        return Template.buildResponse(rescode, responseBody.toString(), contentType);
     }
 
 }
