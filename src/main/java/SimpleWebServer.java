@@ -1,9 +1,9 @@
-import service.ReceiverRequest;
+import service.RequestHandler;
 
 public class SimpleWebServer {
 
     public static void main(String[] args) {
-        ReceiverRequest request = new ReceiverRequest();
-        request.listenRequest();
+        RequestHandler requestHandler = new RequestHandler();
+        requestHandler.listenRequest();
     }
 }

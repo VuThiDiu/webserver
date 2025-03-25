@@ -22,7 +22,9 @@ public class Dispatcher {
     private Map<String, Object> mapsController;
 
 
-    private static Dispatcher instance;
+    /* volatile key word ensure that : any write to it is immediately visible to all other thread.  */
+    private static volatile Dispatcher instance;
+
     public static Dispatcher getInstance() {
         if (instance == null) {
             synchronized (Dispatcher.class) {
@@ -34,8 +36,8 @@ public class Dispatcher {
         return instance;
     }
 
-    public void setController(Object controller) {
-        scanHandlers(controller);
+    public void registerController(Object controller) {
+        mapMethodsFromController(controller.getClass());
         mapsController.put(controller.getClass().getName(), controller);
     }
 
@@ -51,8 +53,8 @@ public class Dispatcher {
         /* Load all controller*/
     }
 
-    private void scanHandlers(Object controller) {
-        for (Method method : controller.getClass().getDeclaredMethods()) {
+    private void mapMethodsFromController(Class controller) {
+        for (Method method : controller.getDeclaredMethods()) {
             if (method.isAnnotationPresent(GetMapping.class)) {
                 GetMapping getMapping = method.getAnnotation(GetMapping.class);
                 getMethod.put(getMapping.value(), method);
@@ -73,34 +75,17 @@ public class Dispatcher {
     }
 
 
-
     public Object execute(String method, String path, String requestBody) {
         try {
             switch (method) {
                 case "GET":
-                    Method handler = getMethod.get(path);
-                    if (Objects.isNull(handler)) return null;
-                    String className = handler.getDeclaringClass().getName();
-                    Object controller = mapsController.get(className);
-                    return  handler.invoke(controller);
+                    return handleRequest(getMethod, path);
                 case "POST":
-                    handler = postMethod.get(path);
-                    if (Objects.isNull(handler)) return null;
-                    className = handler.getDeclaringClass().getName();
-                    controller = mapsController.get(className);
-                    return handler.invoke(controller, requestBody);
+                    return handleRequest(postMethod, path, requestBody);
                 case "PUT":
-                    handler = putMethod.get(path);
-                    if (Objects.isNull(handler)) return null;
-                    className = handler.getDeclaringClass().getName();
-                    controller = mapsController.get(className);
-                    return  handler.invoke(controller, requestBody);
+                    return handleRequest(putMethod, path, requestBody);
                 case "DELETE":
-                    handler = deleteMethod.get(path);
-                    if (Objects.isNull(handler)) return null;
-                    className = handler.getDeclaringClass().getName();
-                    controller = mapsController.get(className);
-                    return  handler.invoke(controller, requestBody);
+                    return handleRequest(deleteMethod, path, requestBody);
                 default:
                     throw new MethodNotDeclared("Method not declared");
             }
@@ -109,5 +94,15 @@ public class Dispatcher {
         }
     }
 
+    public Object handleRequest(Map<String, Method> methodMaps, String path, Object... args) throws InvocationTargetException, IllegalAccessException {
+        Method handler = methodMaps.get(path);
+        if (Objects.isNull(handler)) return null;
+
+
+        String className = handler.getDeclaringClass().getName();
+        Object controller = mapsController.get(className);
+        return handler.invoke(controller, args);
+
+    }
 
 }

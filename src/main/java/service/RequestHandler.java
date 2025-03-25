@@ -17,18 +17,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
-public class ReceiverRequest {
+public class RequestHandler {
     private ExecutorService executorService;
     private ApplicationConfig applicationConfig;
     private Dispatcher dispatcher;
 
-    public ReceiverRequest() {
+    public RequestHandler() {
         applicationConfig = ApplicationConfig.getInstance();
         executorService = Executors.newFixedThreadPool(applicationConfig.getThreads());
-        dispatcher = Dispatcher.getInstance();
 
+        declareDispatcherAndLRegisterAllController();
+    }
+
+    public void declareDispatcherAndLRegisterAllController(){
+        dispatcher = Dispatcher.getInstance();
         // TODO: automatically scan all controllers in the package
-        dispatcher.setController(new HomeController());
+        dispatcher.registerController(new HomeController());
     }
 
 
@@ -55,7 +59,7 @@ public class ReceiverRequest {
 
             /*Build http response for Get request*/
 
-            Object responseData = dispatcher.execute(httpRequest.getMethod(), httpRequest.getPath(), httpRequest.getContent());
+            Object responseData = dispatcher.execute(httpRequest.getMethod(), httpRequest.getContextPath(), httpRequest.getContent());
 
             /*Format response by contentType*/
             String accept = httpRequest.getHeaders().get("Accept");

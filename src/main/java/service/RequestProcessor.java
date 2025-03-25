@@ -45,7 +45,7 @@ public class RequestProcessor {
         String method = requestParts[0];
         String path = requestParts[1];
         request.setMethod(method);
-        request.setPath(path);
+        request.setContextPath(path);
     }
 
 

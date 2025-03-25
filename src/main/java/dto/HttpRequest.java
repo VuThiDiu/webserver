@@ -7,13 +7,15 @@ import java.util.Map;
 @Data
 public class HttpRequest {
     private String method; // GET, POST, PUT, DELETE
-    private String path; // path
+    private String contextPath; // path
     private String version; // HTTP/1.1
-    private String host; // domain name of server
+    private String serverName; // domain name of server
 
 
     private Map<String, String> headers;
     private String content;
+    private String session;
+
 
 
     /*private String contentType; //  Content type ( request _ response )
