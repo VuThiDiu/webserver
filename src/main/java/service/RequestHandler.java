@@ -29,7 +29,7 @@ public class RequestHandler {
         declareDispatcherAndLRegisterAllController();
     }
 
-    public void declareDispatcherAndLRegisterAllController(){
+    public void declareDispatcherAndLRegisterAllController() {
         dispatcher = Dispatcher.getInstance();
         // TODO: automatically scan all controllers in the package
         dispatcher.registerController(new HomeController());
@@ -46,6 +46,7 @@ public class RequestHandler {
                 executorService.execute(() -> handleRequest(clientSocket));
             }
         } catch (Exception ex) {
+            //TODO: handle something in here
         }
     }
 

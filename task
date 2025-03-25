@@ -6,4 +6,5 @@ https://www.baeldung.com/java-custom-annotation
 + Request income -> Dispatcher -> Handler
 
 
-- Create session Management
+- Create session Management:
++ session Lifecycle : creation -> maintenance -> destruction: logout or expired time

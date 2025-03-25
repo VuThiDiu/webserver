@@ -1,2 +1,3 @@
 port: 9000
 threads : 10
+sessionTimeout: 10 # test in seconds
