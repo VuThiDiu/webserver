@@ -1,5 +1,8 @@
 package constants;
 
+import lombok.Getter;
+
+@Getter
 public enum ResCode {
     OK("200", "OK"),
     BAD_REQUEST("400", "Bad Request"),
@@ -10,13 +13,6 @@ public enum ResCode {
         this.des = des;
     }
 
-    public String getCode() {
-        return code;
-    }
-    public String getDes(){
-        return des;
-    }
-
-    private String code;
-    private String des;
+    private final String code;
+    private final String des;
 }

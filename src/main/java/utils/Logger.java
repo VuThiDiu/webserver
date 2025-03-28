@@ -1,6 +1,6 @@
 package utils;
 
-public class LoggingSystem {
+public class Logger {
     public static void buildLogs(String... args) {
         StringBuilder log = new StringBuilder();
         int i = 0;

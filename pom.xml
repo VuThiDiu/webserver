@@ -32,10 +32,20 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Reading yaml file -> Object -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version> <!-- Use the latest version -->
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <!-- Convert Json to String and opposite-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.12.1</version>
         </dependency>
 
 

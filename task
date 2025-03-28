@@ -1,0 +1,10 @@
+
+- Create my own Dispatcher ( handle HTTP Request and route them to the appreciate handler )
++ Create a custom annotation ( GET, Post, Put, Delete)
+https://www.baeldung.com/java-custom-annotation
++ Dispatcher get all path with annotation
++ Request income -> Dispatcher -> Handler
+
+
+- Create session Management:
++ session Lifecycle : creation -> maintenance -> destruction: logout or expired time

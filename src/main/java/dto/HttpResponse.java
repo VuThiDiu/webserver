@@ -1,4 +1,4 @@
-package http;
+package dto;
 
 
 import lombok.Data;
